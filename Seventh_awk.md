@@ -432,65 +432,252 @@ awk 'BEGIN{if( '$(id -u)'>=500 && '$(id -u)' !=65534 ) {print "是普通用户"}
 
 ```
 
+#### ③ if...elif...else结构
+
+```powershell
+if [xxxx];then
+	xxxx
+elif [xxx];then
+	xxx
+....
+else
+...
+fi
 
 
+if...else if...else语句：
+
+格式：
+{ if(表达式1)｛语句;语句；...｝else if(表达式2)｛语句;语句；...｝else if(表达式3)｛语句;语句；...｝else｛语句;语句；...｝}
+
+awk -F: '{ if($3==0) {print $1,":是管理员"} else if($3>=1 && $3<=499 || $3==65534 ) {print $1,":是系统用户"} else {print $1,":是普通用户"}}'
 
 
+awk -F: '{ if($3==0) {i++} else if($3>=1 && $3<=499 || $3==65534 ) {j++} else {k++}};END{print "管理员个数为:"i "\n系统用户个数为:"j"\n普通用户的个数为:"k }'
 
 
+# awk -F: '{if($3==0) {print $1,"is admin"} else if($3>=1 && $3<=499 || $3==65534) {print $1,"is sys users"} else {print $1,"is general user"} }' a.txt 
+
+root is admin
+bin is sys users
+daemon is sys users
+adm is sys users
+lp is sys users
+redhat is general user
+user01 is general user
+named is sys users
+u01 is general user
+YUNWEI is general user
+
+awk -F: '{  if($3==0) {print $1":管理员"} else if($3>=1 && $3<500 || $3==65534 ) {print $1":是系统用户"} else {print $1":是普通用户"}}'   /etc/passwd
 
 
+awk -F: '{if($3==0) {i++} else if($3>=1 && $3<500 || $3==65534){j++} else {k++}};END{print "管理员个数为:" i RS "系统用户个数为:"j RS "普通用户的个数为:"k }' /etc/passwd
+管理员个数为:1
+系统用户个数为:28
+普通用户的个数为:27
 
 
+# awk -F: '{ if($3==0) {print $1":是管理员"} else if($3>=500 && $3!=65534) {print $1":是普通用户"} else {print $1":是系统用户"}}' passwd 
+
+awk -F: '{if($3==0){i++} else if($3>=500){k++} else{j++}} END{print i; print k; print j}' /etc/passwd
+
+awk -F: '{if($3==0){i++} else if($3>999){k++} else{j++}} END{print "管理员个数: "i; print "普通用个数: "k; print "系统用户: "j}' /etc/passwd 
+
+如果是普通用户打印默认shell，如果是系统用户打印用户名
+# awk -F: '{if($3>=1 && $3<500 || $3 == 65534) {print $1} else if($3>=500 && $3<=60000 ) {print $NF} }' /etc/passwd
+```
+
+### ㈡ 循环语句
+
+#### ① for循环
+
+```powershell
+打印1~5
+for ((i=1;i<=5;i++));do echo $i;done
+
+# awk 'BEGIN { for(i=1;i<=5;i++) {print i} }'
+打印1~10中的奇数
+# for ((i=1;i<=10;i+=2));do echo $i;done|awk '{sum+=$0};END{print sum}'
+# awk 'BEGIN{ for(i=1;i<=10;i+=2) {print i} }'
+# awk 'BEGIN{ for(i=1;i<=10;i+=2) print i }'
+
+计算1-5的和
+# awk 'BEGIN{sum=0;for(i=1;i<=5;i++) sum+=i;print sum}'
+# awk 'BEGIN{for(i=1;i<=5;i++) (sum+=i);{print sum}}'
+# awk 'BEGIN{for(i=1;i<=5;i++) (sum+=i);print sum}'
+```
+
+#### ② while循环
+
+```powershell
+打印1-5
+# i=1;while (($i<=5));do echo $i;let i++;done
+
+# awk 'BEGIN { i=1;while(i<=5) {print i;i++} }'
+打印1~10中的奇数
+# awk 'BEGIN{i=1;while(i<=10) {print i;i+=2} }'
+计算1-5的和
+# awk 'BEGIN{i=1;sum=0;while(i<=5) {sum+=i;i++}; print sum }'
+# awk 'BEGIN {i=1;while(i<=5) {(sum+=i) i++};print sum }'
+```
+
+#### ③ 嵌套循环
+
+~~~powershell
+嵌套循环：
+#!/bin/bash
+for ((y=1;y<=5;y++))
+do
+	for ((x=1;x<=$y;x++))
+	do
+		echo -n $x	
+	done
+echo
+done
+
+awk 'BEGIN{ for(y=1;y<=5;y++) {for(x=1;x<=y;x++) {printf x} ;print } }'
 
 
+# awk 'BEGIN { for(y=1;y<=5;y++) { for(x=1;x<=y;x++) {printf x};print} }'
+1
+12
+123
+1234
+12345
+
+# awk 'BEGIN{ y=1;while(y<=5) { for(x=1;x<=y;x++) {printf x};y++;print}}'
+1
+12
+123
+1234
+12345
+
+尝试用三种方法打印99口诀表：
+#awk 'BEGIN{for(y=1;y<=9;y++) { for(x=1;x<=y;x++) {printf x"*"y"="x*y"\t"};print} }'
+
+#awk 'BEGIN{for(y=1;y<=9;y++) { for(x=1;x<=y;x++) printf x"*"y"="x*y"\t";print} }'
+#awk 'BEGIN{i=1;while(i<=9){for(j=1;j<=i;j++) {printf j"*"i"="j*i"\t"};print;i++ }}'
+
+#awk 'BEGIN{for(i=1;i<=9;i++){j=1;while(j<=i) {printf j"*"i"="i*j"\t";j++};print}}'
+
+循环的控制：
+break		条件满足的时候中断循环
+continue	条件满足的时候跳过循环
+# awk 'BEGIN{for(i=1;i<=5;i++) {if(i==3) break;print i} }'
+1
+2
+# awk 'BEGIN{for(i=1;i<=5;i++){if(i==3) continue;print i}}'
+1
+2
+4
+5
+~~~
+
+##6. awk算数运算
+
+~~~powershell
++ - * / %(模) ^(幂2^3)
+可以在模式中执行计算，awk都将按浮点数方式执行算术运算
+# awk 'BEGIN{print 1+1}'
+# awk 'BEGIN{print 1**1}'
+# awk 'BEGIN{print 2**3}'
+# awk 'BEGIN{print 2/3}'
+~~~
+
+# 六、awk统计案例
+
+## 1、统计系统中各种类型的shell
+
+```powershell
+# awk -F: '{ shells[$NF]++ };END{for (i in shells) {print i,shells[i]} }' /etc/passwd
+
+books[linux]++
+books[linux]=1
+shells[/bin/bash]++
+shells[/sbin/nologin]++
+
+/bin/bash 5
+/sbin/nologin 6
+
+shells[/bin/bash]++			a
+shells[/sbin/nologin]++		b
+shells[/sbin/shutdown]++	c
+
+books[linux]++
+books[php]++
+
+```
+
+## 2、统计网站访问状态
+
+```powershell
+# ss -antp|grep 80|awk '{states[$1]++};END{for(i in states){print i,states[i]}}'
+TIME_WAIT 578
+ESTABLISHED 1
+LISTEN 1
+
+# ss -an |grep :80 |awk '{states[$2]++};END{for(i in states){print i,states[i]}}'
+LISTEN 1
+ESTAB 5
+TIME-WAIT 25
+
+# ss -an |grep :80 |awk '{states[$2]++};END{for(i in states){print i,states[i]}}' |sort -k2 -rn
+TIME-WAIT 18
+ESTAB 8
+LISTEN 1
+
+```
+
+## 3、统计访问网站的每个IP的数量
+
+```powershell
+# netstat -ant |grep :80 |awk -F: '{ip_count[$8]++};END{for(i in ip_count){print i,ip_count[i]} }' |sort
 
 
+# ss -an |grep :80 |awk -F":" '!/LISTEN/{ip_count[$(NF-1)]++};END{for(i in ip_count){print i,ip_count[i]}}' |sort -k2 -rn |head
+```
 
+## 4、统计网站日志中PV量
 
+```powershell
+统计Apache/Nginx日志中某一天的PV量 　<统计日志>
+# grep '27/Jul/2017' mysqladmin.cc-access_log |wc -l
+14519
 
+统计Apache/Nginx日志中某一天不同IP的访问量　<统计日志>
+# grep '27/Jul/2017' mysqladmin.cc-access_log |awk '{ips[$1]++};END{for(i in ips){print i,ips[i]} }' |sort -k2 -rn |head
 
+# grep '07/Aug/2017' access.log |awk '{ips[$1]++};END{for(i in ips){print i,ips[i]} }' |awk '$2>100' |sort -k2 -rn
 
+```
 
+**名词解释：**
 
+==网站浏览量（PV）==
+名词：PV=PageView (网站浏览量)
+说明：指页面的浏览次数，用以衡量网站用户访问的网页数量。多次打开同一页面则浏览量累计。用户每打开一个页面便记录1次PV。
 
+名词：VV = Visit View（访问次数）
+说明：从访客来到您网站到最终关闭网站的所有页面离开，计为1次访问。若访客连续30分钟没有新开和刷新页面，或者访客关闭了浏览器，则被计算为本次访问结束。
 
+独立访客（UV）
+名词：UV= Unique Visitor（独立访客数）
+说明：1天内相同的访客多次访问您的网站只计算1个UV。
 
+独立IP（IP）
+名词：IP=独立IP数
+说明：指1天内使用不同IP地址的用户访问网站的数量。同一IP无论访问了几个页面，独立IP数均为1
 
+#七、课后作业
 
+**作业1：**
+1、写一个自动检测磁盘使用率的脚本，当磁盘使用空间达到90%以上时，需要发送邮件给相关人员
+2、写一个脚本监控系统内存和交换分区使用情况
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+**作业2：**
+输入一个IP地址，使用脚本判断其合法性：
+必须符合ip地址规范，第1、4位不能以0开头，不能大于255不能小于0
 
 
 
